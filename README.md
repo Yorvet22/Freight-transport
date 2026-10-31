@@ -47,11 +47,21 @@ Stack: **Node.js 18+ / Express 4** REST API on **MySQL 8**, and a **vanilla JS +
 
 ## Screenshots
 
-> Screenshots will be added here.
+**Dashboard** — on-time rate, fleet utilization, transit time, orders per day and warehouse flow.
 
-| Dashboard | Orders | Order details / POD |
-|---|---|---|
-| _placeholder_ | _placeholder_ | _placeholder_ |
+![Dashboard](docs/screenshots/dashboard.png)
+
+**Orders** — server-side search, filters, sorting and pagination; status pills and assigned vehicles.
+
+![Orders](docs/screenshots/orders.png)
+
+**Warehouses** — sites and the daily dock schedule (departures by pickup window, arrivals by planned date).
+
+![Warehouses](docs/screenshots/warehouses.png)
+
+**Reports** — period filters, totals, per-warehouse and per-vehicle breakdowns, PDF and Excel export.
+
+![Reports](docs/screenshots/reports.png)
 
 ## Quick start
 
