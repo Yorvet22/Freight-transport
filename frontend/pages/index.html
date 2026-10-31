@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard · FreightFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="/js/ui.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/layout.js"></script>
+</head>
+<body data-title="Dashboard">
+<main id="app">
+  <div class="page-header">
+    <div>
+      <h2>Operations overview</h2>
+      <p>Delivery performance, fleet usage and warehouse flow.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-light" data-action="refresh">Refresh</button>
+      <a class="btn btn-primary" href="/orders.html?new=1" data-requires-role="dispatcher"><i data-lucide="plus" aria-hidden="true"></i>New order</a>
+    </div>
+  </div>
+
+  <!-- KPI cards: label → number → delta/context → optional sparkline (DESIGN §3) -->
+  <section class="kpi-grid mb-3" aria-label="Key metrics">
+    <div class="card kpi-card">
+      <div class="kpi-label">Orders created, last 7 days</div>
+      <div class="kpi-value" data-kpi="week"><span class="skeleton" style="width:60px"></span></div>
+      <div class="kpi-delta" data-kpi="weekDelta">&nbsp;</div>
+      <svg class="kpi-spark" data-kpi="spark" viewBox="0 0 200 28" preserveAspectRatio="none" aria-hidden="true"></svg>
+    </div>
+    <div class="card kpi-card">
+      <div class="kpi-label">On-time rate</div>
+      <div class="kpi-value" data-kpi="onTimeRate"><span class="skeleton" style="width:60px"></span></div>
+      <div class="kpi-delta">Delivered by planned date</div>
+    </div>
+    <div class="card kpi-card">
+      <div class="kpi-label">Fleet utilization</div>
+      <div class="kpi-value" data-kpi="fleetUtilization"><span class="skeleton" style="width:60px"></span></div>
+      <div class="kpi-delta" data-kpi="fleetSub">&nbsp;</div>
+    </div>
+    <div class="card kpi-card">
+      <div class="kpi-label">Avg transit time</div>
+      <div class="kpi-value" data-kpi="avgTransitHours"><span class="skeleton" style="width:60px"></span></div>
+      <div class="kpi-delta">Dispatch to delivery</div>
+    </div>
+    <div class="card kpi-card">
+      <div class="kpi-label">Active orders</div>
+      <div class="kpi-value" data-kpi="active"><span class="skeleton" style="width:60px"></span></div>
+      <div class="kpi-delta" data-kpi="activeSub">&nbsp;</div>
+    </div>
+  </section>
+
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-lg-8">
+      <div class="card h-100">
+        <div class="card-header">
+          <h3 class="card-title-sm">Orders per day</h3>
+          <div class="card-subtitle-sm">Created over the last 14 days</div>
+        </div>
+        <div class="card-body"><div class="chart-box"><canvas id="ordersPerDayChart" aria-label="Orders per day line chart" role="img"></canvas></div></div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-4">
+      <div class="card h-100">
+        <div class="card-header">
+          <h3 class="card-title-sm">Orders by status</h3>
+          <div class="card-subtitle-sm" data-kpi="totalOrders">All orders</div>
+        </div>
+        <div class="card-body"><div class="chart-box"><canvas id="statusChart" aria-label="Orders by status doughnut chart" role="img"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-xl-5">
+      <div class="card h-100">
+        <div class="card-header">
+          <h3 class="card-title-sm">Warehouse flow</h3>
+          <div class="card-subtitle-sm">Inbound (destination) and outbound (origin) orders</div>
+        </div>
+        <div class="card-body"><div class="chart-box"><canvas id="warehouseChart" aria-label="Warehouse inbound and outbound bar chart" role="img"></canvas></div></div>
+      </div>
+    </div>
+    <div class="col-12 col-xl-7">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <div>
+            <h3 class="card-title-sm">Recent orders</h3>
+            <div class="card-subtitle-sm">The five latest orders</div>
+          </div>
+          <a href="/orders.html" class="small fw-medium">View all</a>
+        </div>
+        <div class="table-wrap auto">
+          <table class="table">
+            <thead><tr><th>Order</th><th>Client</th><th class="hide-xs">Route</th><th>Status</th><th class="hide-xs text-end">Created</th></tr></thead>
+            <tbody id="recentOrders"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="/js/charts.js"></script>
+<script src="/js/dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Orders · FreightFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="/js/ui.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/layout.js"></script>
+</head>
+<body data-title="Orders">
+<main id="app">
+  <div class="page-header">
+    <div>
+      <h2>Orders</h2>
+      <p>Create, dispatch and deliver freight orders.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-light" data-action="export">Export to Excel</button>
+      <button type="button" class="btn btn-primary" data-action="create" data-requires-role="dispatcher"><i data-lucide="plus" aria-hidden="true"></i>New order</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <form class="toolbar" id="filters" role="search">
+      <div class="search-box">
+        <i data-lucide="search" aria-hidden="true"></i>
+        <input type="search" class="form-control" name="q" placeholder="Search number, client, cargo, plate, driver…" aria-label="Search orders">
+      </div>
+      <select class="form-select" name="status" aria-label="Filter by status">
+        <option value="">All statuses</option>
+        <option value="new">New</option>
+        <option value="in_transit">In Transit</option>
+        <option value="delivered">Delivered</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+      <select class="form-select" name="type" aria-label="Filter by type">
+        <option value="">All types</option>
+        <option value="inbound">Inbound</option>
+        <option value="outbound">Outbound</option>
+        <option value="transfer">Transfer</option>
+      </select>
+      <select class="form-select" name="warehouseId" aria-label="Filter by warehouse"><option value="">All warehouses</option></select>
+      <select class="form-select" name="direction" aria-label="Warehouse direction" disabled>
+        <option value="any">In or out</option>
+        <option value="inbound">Inbound to</option>
+        <option value="outbound">Outbound from</option>
+      </select>
+      <div class="toolbar-group">
+        <select class="form-select" name="vehicleId" aria-label="Filter by vehicle"><option value="">All vehicles</option></select>
+        <button type="button" class="btn-link-ff small text-nowrap" data-action="reset-filters">Clear filters</button>
+      </div>
+    </form>
+    <div class="table-wrap">
+      <table class="table" id="ordersTable">
+        <thead>
+          <tr>
+            <th data-sort="orderNumber">Order</th>
+            <th data-sort="clientName">Client</th>
+            <th class="hide-xs hide-lg">Route</th>
+            <th class="hide-xs hide-lg">Vehicle</th>
+            <th data-sort="cargoWeight" class="text-end">Weight</th>
+            <th data-sort="plannedDeliveryDate" class="hide-xs hide-lg">Planned</th>
+            <th data-sort="status">Status</th>
+            <th data-sort="createdAt" class="hide-xs hide-lg">Created</th>
+            <th class="text-end"><span class="visually-hidden">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody id="ordersBody"></tbody>
+      </table>
+    </div>
+    <div class="card-footer" id="pagination"></div>
+  </div>
+</main>
+
+<!-- Create / edit order -->
+<div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
+    <form class="modal-content" id="orderForm" novalidate>
+      <div class="modal-header">
+        <h5 class="modal-title" id="orderModalTitle">New order</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger small py-2 d-none" data-role="form-alert" role="alert"></div>
+        <div class="row g-3">
+          <div class="col-12 form-section">Shipment</div>
+          <div class="col-sm-5">
+            <label class="form-label" for="f-type">Type<span class="req">*</span></label>
+            <select class="form-select" id="f-type" name="type" required>
+              <option value="inbound">Inbound — to our warehouse</option>
+              <option value="outbound">Outbound — from our warehouse</option>
+              <option value="transfer">Transfer — warehouse to warehouse</option>
+            </select>
+          </div>
+          <div class="col-sm-7">
+            <label class="form-label" for="f-client">Client name<span class="req">*</span></label>
+            <input class="form-control" id="f-client" name="clientName" maxlength="100" required>
+          </div>
+
+          <div class="col-12 form-section">Route</div>
+          <div class="col-sm-6">
+            <label class="form-label" for="f-origin">Origin warehouse<span class="req" data-req="origin">*</span></label>
+            <select class="form-select" id="f-origin" name="originWarehouseId"></select>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label" for="f-dest">Destination warehouse<span class="req" data-req="destination">*</span></label>
+            <select class="form-select" id="f-dest" name="destinationWarehouseId"></select>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label" for="f-pickup">Pickup address<span class="req">*</span></label>
+            <input class="form-control" id="f-pickup" name="pickupAddress" maxlength="200" required>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label" for="f-delivery">Delivery address<span class="req">*</span></label>
+            <input class="form-control" id="f-delivery" name="deliveryAddress" maxlength="200" required>
+          </div>
+          <div class="col-12"><div class="form-text mt-0" id="routeHint"></div></div>
+
+          <div class="col-12 form-section">Cargo</div>
+          <div class="col-sm-8">
+            <label class="form-label" for="f-cargo">Cargo description<span class="req">*</span></label>
+            <input class="form-control" id="f-cargo" name="cargoDescription" required>
+          </div>
+          <div class="col-sm-4">
+            <label class="form-label" for="f-weight">Weight<span class="req">*</span></label>
+            <div class="input-group">
+              <input class="form-control" id="f-weight" name="cargoWeight" type="number" min="0.01" max="100000" step="0.01" required>
+              <span class="input-group-text">kg</span>
+            </div>
+          </div>
+
+          <div class="col-12 form-section">Scheduling</div>
+          <div class="col-sm-6">
+            <label class="form-label" for="f-vehicle">Vehicle</label>
+            <select class="form-select" id="f-vehicle" name="vehicleId"></select>
+            <div class="form-text" id="vehicleHint">Vehicles in maintenance are not listed.</div>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label" for="f-planned">Planned delivery date</label>
+            <input class="form-control" id="f-planned" name="plannedDeliveryDate" type="date">
+          </div>
+          <div class="col-sm-5">
+            <label class="form-label" for="f-ws">Pickup window start</label>
+            <input class="form-control" id="f-ws" name="pickupWindowStart" type="datetime-local">
+          </div>
+          <div class="col-sm-5">
+            <label class="form-label" for="f-we">Pickup window end</label>
+            <input class="form-control" id="f-we" name="pickupWindowEnd" type="datetime-local">
+          </div>
+          <div class="col-sm-2">
+            <label class="form-label" for="f-dock">Dock</label>
+            <input class="form-control" id="f-dock" name="dockNumber" maxlength="10" placeholder="D-1">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="orderSaveBtn">Save order</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Order detail drawer -->
+<div class="offcanvas offcanvas-end drawer" tabindex="-1" id="orderDrawer" aria-labelledby="drawerTitle">
+  <div class="offcanvas-header">
+    <div>
+      <h5 class="offcanvas-title mono" id="drawerTitle">Order</h5>
+      <div id="drawerBadges" class="d-flex gap-2 mt-1"></div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body pt-0" id="drawerBody"></div>
+</div>
+
+<!-- Proof of delivery -->
+<div class="modal fade" id="podModal" tabindex="-1" aria-labelledby="podTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+    <form class="modal-content" id="podForm" novalidate>
+      <div class="modal-header">
+        <h5 class="modal-title" id="podTitle">Proof of delivery</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger small py-2 d-none" data-role="form-alert" role="alert"></div>
+        <p class="small text-body-secondary" id="podOrderInfo"></p>
+        <div class="mb-3">
+          <label class="form-label" for="pod-name">Recipient name<span class="req">*</span></label>
+          <input class="form-control" id="pod-name" name="podRecipientName" maxlength="100" required autocomplete="off">
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="form-label mb-0">Signature</span>
+            <button type="button" class="btn-link-ff small" data-action="clear-signature">Clear</button>
+          </div>
+          <div class="signature-wrap" id="signatureWrap">
+            <canvas id="signatureCanvas" aria-label="Signature pad — draw with mouse, pen or finger"></canvas>
+            <div class="signature-line"></div>
+            <div class="signature-hint">Sign here</div>
+          </div>
+        </div>
+        <div>
+          <label class="form-label" for="pod-note">Note</label>
+          <textarea class="form-control" id="pod-note" name="podNote" rows="2" maxlength="500" placeholder="Condition of goods, remarks…"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-success" id="podSaveBtn">Confirm delivery</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="/js/signature-pad.js"></script>
+<script src="/js/export.js"></script>
+<script src="/js/orders.js"></script>
+</body>
+</html>

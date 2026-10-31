@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Environment (secrets) - commit only .env.example
+.env
+.env.*
+!.env.example
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Test & logs
+coverage/
+*.log
+npm-debug.log*
